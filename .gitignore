@@ -1,0 +1,21 @@
+# Reference solutions — kept locally, intentionally not published.
+# Every exercise in this repo is meant to be solved by the learner; shipping
+# the answer key in the public repo would defeat that. Folders named
+# "solution" or "solutions" anywhere in the tree are excluded.
+**/solution/
+**/solutions/
+
+# Java build output
+*.class
+/out/
+/target/
+/build/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+*.iml
+.vscode/
