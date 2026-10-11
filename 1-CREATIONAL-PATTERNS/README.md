@@ -65,6 +65,17 @@ class OrderService {
 - Adding a new channel means editing working business code (an OCP violation)
 - Hard to unit test: you can't swap in a fake notification without changing the class
 
+🔎 SOLID violations:
+
+| Principle | What violates it | Why |
+|---|---|---|
+| **OCP** | The `if`/`else` chain inside `confirmOrder()` | Adding WhatsApp means editing `OrderService`, a class that already worked |
+| **DIP** | `new EmailNotification()`, `new SmsNotification()`, ... | High-level business logic depends on every concrete class instead of only on `Notification` |
+| **SRP** | `OrderService` confirms orders *and* decides which class to build | It has two reasons to change: the order workflow, and the list of channels |
+
+The fix below removes all three from `OrderService`: it depends only on `Notification`, and a
+new channel no longer touches it.
+
 ## ✅ Good example
 
 ```java

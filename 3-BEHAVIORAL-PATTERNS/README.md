@@ -62,6 +62,17 @@ class OrderService {
 - One failing reaction (analytics is down) can break placing the order
 - Impossible to enable/disable reactions at runtime or in tests
 
+🔎 SOLID violations:
+
+| Principle | What violates it | Why |
+|---|---|---|
+| **OCP** | The list of calls inside `placeOrder()` | Every new reaction (loyalty points, Slack) means editing a method that already worked |
+| **SRP** | `OrderService` places orders *and* coordinates inventory, email, and analytics | It changes whenever any other team wants to react to an order |
+| **DIP** | The `new InventoryService()`, `new EmailService()`, `new AnalyticsService()` fields | The core order logic depends on concrete collaborators instead of on an abstraction |
+
+The fix below makes `OrderService` depend on one small `OrderListener` interface, so new
+reactions are new classes, not edits.
+
 ## ✅ Good example
 
 ```java

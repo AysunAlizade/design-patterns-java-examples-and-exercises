@@ -73,6 +73,12 @@ class ReportService {
 - The expensive setup runs once per service instead of once per application
 - Nothing stops the next developer from writing `new ConnectionPool()` a third time
 
+🔎 SOLID check: **no SOLID principle is clearly violated here.** The bug is a broken rule
+("there must be only one pool"), not a design-principle violation, so Singleton is not a
+SOLID fix. It is the opposite: a Singleton *adds* SRP and DIP pressure, which is covered in
+**The price of a Singleton** below. Most other patterns in this
+repo do fix a SOLID violation, and their lessons show which one.
+
 ## ✅ Good example
 
 ```java

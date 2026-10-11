@@ -70,4 +70,7 @@ public class Main {
  *  - Each pool thinks only 2 connections are in use, while 4 are really open
  *  - The expensive pool setup runs once per service instead of once per application
  *  - Nothing in ConnectionPool prevents the next developer from writing `new ConnectionPool()` again
+ *
+ * SOLID check: no SOLID principle is clearly violated here. The bug is a broken rule
+ * ("there must be only one pool"), not a design-principle violation.
  */

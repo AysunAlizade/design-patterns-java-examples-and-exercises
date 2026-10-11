@@ -73,6 +73,17 @@ class SubscriptionService {
 - Switching provider (or adding a second one) means editing every service
 - You can't test checkout without the real SDK class
 
+🔎 SOLID violations:
+
+| Principle | What violates it | Why |
+|---|---|---|
+| **DIP** | `new StripeClient()` inside `CheckoutService` and `SubscriptionService` | Business logic depends on a concrete vendor SDK instead of on an abstraction it owns |
+| **SRP** | The dollars → cents conversion inside `checkout()` and `renew()` | Each service does its own job *and* translates to the vendor's API, so a Stripe change is a reason to edit both |
+| **OCP** | Vendor calls spread over every service | Switching or adding a provider means editing every class that takes a payment |
+
+The fix below gives the business code a `PaymentProcessor` abstraction and moves the
+translation into one adapter class.
+
 ## ✅ Good example
 
 ```java
