@@ -466,6 +466,4 @@ twice. Fix it with a lazy, thread-safe Singleton.
 
 ## Next
 
-### 2. Factory Method *(coming soon)*
-
-Back to [Creational Patterns](../README.md).
+### [2. Factory Method →](../2-FACTORY-METHOD/)
