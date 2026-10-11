@@ -118,83 +118,243 @@ Notice `synchronized` on `acquire()`. A Singleton is shared by the whole applica
 threads can call its methods at once. The pattern guarantees one *instance*; keeping that
 instance's *state* safe is still your job.
 
-## Eager vs. lazy, and the thread-safety trap
+## Making a Singleton thread-safe
 
-The good example above is an **eager** Singleton: the instance is created when the class is
-loaded, even if nobody ever uses it. That is simple and always thread-safe.
+### The big picture
 
-Sometimes you want a **lazy** Singleton, created only on first use (for example, when setup is
-slow and the object may not be needed). The obvious way to write it is broken:
+There are two decisions to make, and they are connected:
 
-```java
-// ❌ NOT thread-safe
-public static ConnectionPool getInstance() {
-    if (instance == null) {               // two threads can both see null here...
-        instance = new ConnectionPool();  // ...and both create an instance
-    }
-    return instance;
-}
-```
+1. **When is the instance created?**
+   - **Eager:** up front, when the class is first used. Simple.
+   - **Lazy:** only when somebody calls `getInstance()` for the first time. Useful when
+     creating the object is slow and it may never be needed.
+2. **What if two threads ask for it at the same moment?**
+   - With **eager**, nothing can go wrong: the JVM finishes creating the instance before any
+     thread can use the class.
+   - With **lazy**, *you* write the "create it if it doesn't exist yet" code, and that code
+     can be run by two threads at once.
 
-It works in every single-threaded test and fails in production, where two threads arrive at
-the same moment and you silently get two "singletons".
+So the whole topic comes down to one sentence: **a lazy Singleton must make sure that only
+one thread ever runs the "create" step.** Everything below is that one problem and four ways
+to solve it.
 
-These are the correct ways to write a Singleton in Java:
+### The problem: the naive lazy Singleton
 
-| Variant | Lazy? | Thread-safe? | Notes |
-|---|---|---|---|
-| **Eager** (`static final` field) | No | ✅ | Simplest. The default choice when setup is cheap |
-| **Synchronized `getInstance()`** | Yes | ✅ | Correct, but every call takes a lock |
-| **Double-checked locking** | Yes | ✅ | Fast, but the field **must** be `volatile` |
-| **Holder class** | Yes | ✅ | Lazy and lock-free. The best general-purpose lazy version |
-| **Enum** | No | ✅ | Shortest. Also safe against reflection and serialization |
-
-**Double-checked locking** takes the lock only the first time:
-
-```java
-private static volatile ConnectionPool instance;
-
-public static ConnectionPool getInstance() {
-    if (instance == null) {                         // 1st check, no lock
-        synchronized (ConnectionPool.class) {
-            if (instance == null) {                 // 2nd check, inside the lock
-                instance = new ConnectionPool();
-            }
-        }
-    }
-    return instance;
-}
-```
-
-**Holder class** lets the JVM do the work. The nested class is loaded only when
-`getInstance()` is first called, and class loading is thread-safe by definition:
+This is the first version everybody writes:
 
 ```java
 class ConnectionPool {
-    private ConnectionPool() { }
+    private static ConnectionPool instance;        // starts as null
 
+    private ConnectionPool() {
+        System.out.println("Creating the ConnectionPool");
+    }
+
+    // ❌ NOT thread-safe
+    public static ConnectionPool getInstance() {
+        if (instance == null) {                    // step 1: check
+            instance = new ConnectionPool();       // step 2: create
+        }
+        return instance;
+    }
+}
+```
+
+With one thread it is correct. With two threads, **check** and **create** are separate steps,
+and a second thread can slip in between them:
+
+| Time | Thread A | Thread B | `instance` |
+|---|---|---|---|
+| 1 | checks `instance == null` → **true** | | `null` |
+| 2 | | checks `instance == null` → **true** (A hasn't created it yet) | `null` |
+| 3 | creates pool **#1** | | pool #1 |
+| 4 | | creates pool **#2** and overwrites the field | pool #2 |
+
+Thread A is now using pool #1, thread B is using pool #2, and you have two "singletons". It
+passes every single-threaded test and fails in production, only sometimes, which makes it
+very hard to find.
+
+Each fix below closes that gap between **check** and **create**. They differ only in how.
+
+### Fix 1 — Synchronized method (simplest)
+
+Add `synchronized`, and only one thread at a time can be inside `getInstance()`:
+
+```java
+class ConnectionPool {
+    private static ConnectionPool instance;
+
+    private ConnectionPool() {
+        System.out.println("Creating the ConnectionPool");
+    }
+
+    // ✅ thread-safe: check + create now happen as one uninterruptible step
+    public static synchronized ConnectionPool getInstance() {
+        if (instance == null) {
+            instance = new ConnectionPool();
+        }
+        return instance;
+    }
+}
+```
+
+Thread B now has to wait until thread A has left the method. When B gets in, the instance
+already exists, so B skips the creation.
+
+- **Good:** obviously correct, one keyword.
+- **Cost:** the lock is needed only for the very first call, but *every* call takes it,
+  forever. If `getInstance()` is called very often from many threads, they queue up for
+  nothing.
+
+### Fix 2 — Double-checked locking (lock only at the start)
+
+The idea: take the lock **only while the instance doesn't exist yet**. Once it exists, return
+it without locking.
+
+```java
+class ConnectionPool {
+    // volatile is REQUIRED here, see below
+    private static volatile ConnectionPool instance;
+
+    private ConnectionPool() {
+        System.out.println("Creating the ConnectionPool");
+    }
+
+    // ✅ thread-safe, and lock-free after the first call
+    public static ConnectionPool getInstance() {
+        if (instance == null) {                          // 1st check, no lock
+            synchronized (ConnectionPool.class) {        // only one thread gets in
+                if (instance == null) {                  // 2nd check, inside the lock
+                    instance = new ConnectionPool();
+                }
+            }
+        }
+        return instance;
+    }
+}
+```
+
+Every piece has a job. Remove any one of them and it breaks:
+
+| Piece | Why it's there |
+|---|---|
+| **1st check** (outside the lock) | The fast path. After the instance exists, every call ends here and never touches the lock |
+| **`synchronized` block** | At the start, several threads may pass the 1st check together. The lock lets them in one at a time |
+| **2nd check** (inside the lock) | A thread that *waited* for the lock must look again: the thread before it has probably created the instance already |
+| **`volatile`** | Guarantees that other threads see the new instance only when it is **fully built**. Without it, a thread can read a non-null `instance` whose constructor hasn't finished yet |
+
+The same two threads as before:
+
+| Time | Thread A | Thread B |
+|---|---|---|
+| 1 | 1st check → `null`, goes for the lock | 1st check → `null`, goes for the lock |
+| 2 | **gets the lock** | waits |
+| 3 | 2nd check → still `null`, creates the pool | waits |
+| 4 | releases the lock | **gets the lock** |
+| 5 | | 2nd check → **not null**, creates nothing |
+
+- **Good:** lazy, and no locking cost after startup.
+- **Cost:** the most code, and the easiest to get wrong (forgetting `volatile` is a classic
+  bug). You need to recognize it because it is everywhere in existing code and in interviews.
+
+### Fix 3 — Holder class (let the JVM do it)
+
+The JVM already solves this exact problem for itself: it guarantees that **a class is
+initialized exactly once**, even if 100 threads use it for the first time together. The
+holder idiom reuses that guarantee:
+
+```java
+class ConnectionPool {
+
+    private ConnectionPool() {
+        System.out.println("Creating the ConnectionPool");
+    }
+
+    // A nested class is NOT loaded together with ConnectionPool.
+    // It is loaded the first time somebody touches it...
     private static class Holder {
         static final ConnectionPool INSTANCE = new ConnectionPool();
     }
 
+    // ✅ thread-safe and lazy, with no synchronized and no volatile
     public static ConnectionPool getInstance() {
-        return Holder.INSTANCE;
+        return Holder.INSTANCE;                    // ...which happens right here
     }
 }
 ```
 
-**Enum** is the shortest form:
+Step by step:
+
+1. The program starts. `ConnectionPool` may be loaded, but `Holder` is not, so no pool exists
+   yet. That makes it **lazy**.
+2. The first call to `getInstance()` touches `Holder.INSTANCE`, so the JVM loads `Holder` and
+   runs `new ConnectionPool()`.
+3. If other threads call `getInstance()` during that moment, the JVM makes them wait until
+   `Holder` is ready. That makes it **thread-safe**.
+4. Every later call just returns the finished field. No lock is involved.
+
+- **Good:** lazy, thread-safe, fast, and short. Nothing to get wrong.
+- **Cost:** it looks odd until you know the trick.
+
+### Fix 4 — Enum (shortest)
+
+An enum constant is created by the JVM exactly once, under the same class-initialization
+guarantee:
 
 ```java
 enum ConnectionPool {
-    INSTANCE;
+    INSTANCE;                                      // the one and only instance
 
-    public void acquire(String who) { /* ... */ }
+    private static final int MAX_CONNECTIONS = 3;
+    private int inUse = 0;
+
+    ConnectionPool() {
+        System.out.println("Creating the ConnectionPool");
+    }
+
+    public synchronized void acquire(String who) {
+        if (inUse >= MAX_CONNECTIONS) {
+            throw new IllegalStateException("Pool exhausted, " + who + " must wait");
+        }
+        inUse++;
+    }
 }
 
-// usage
+// usage: there is no getInstance(), you use the constant directly
 ConnectionPool.INSTANCE.acquire("OrderService");
 ```
+
+- **Good:** the least code. It is also the only variant that can't be broken by reflection or
+  serialization, two advanced ways of sneaking in a second instance.
+- **Cost:** an enum can't extend another class, and `ConnectionPool.INSTANCE` reads
+  differently from the `getInstance()` most people expect.
+
+### Which one should I use?
+
+| Variant | Lazy? | Locking cost | Use it when |
+|---|---|---|---|
+| **Eager** (`static final` field, the [good example](#-good-example)) | No | None | The default. Setup is cheap, or the object is always needed |
+| **Synchronized method** | Yes | On every call | `getInstance()` is called rarely and you want the simplest lazy code |
+| **Double-checked locking** | Yes | Only at startup | You must read or maintain existing code that uses it |
+| **Holder class** | Yes | None | You want lazy. This is the best general-purpose lazy version |
+| **Enum** | No | None | You want the shortest, most robust form |
+
+In short: start with **eager**. If you need lazy, use the **holder class**. Learn
+**double-checked locking** well enough to read it and to explain why `volatile` is there.
+
+"Eager" needs one clarification. Java initializes a class the first time it is *used*, so an
+eager Singleton is created when anything in the class is first touched, not when the program
+starts. The difference from lazy shows up only when the class has other static members:
+calling `ConnectionPool.someOtherStaticMethod()` creates an eager instance, but not a
+holder-based one.
+
+All of this protects only the **creation** of the instance. The instance's own methods (like
+`acquire()`) are called by many threads too, and need their own protection, such as
+`synchronized`.
+
+Run [`examples/03-thread-safe-variants`](./examples/03-thread-safe-variants/Main.java) to see
+it for yourself: 10 threads call `getInstance()` at the same moment, the naive version creates
+several instances, and each fix creates exactly one.
 
 ## ⚠️ The price of a Singleton
 
@@ -270,6 +430,7 @@ instance **per server**, so it can't be used to coordinate between machines.
 |---|-------|
 | 01 | Each service creates its own `ConnectionPool`, so the connection limit is broken (problem) |
 | 02 | `ConnectionPool` as a Singleton: private constructor, one shared instance, limit enforced (fixed) |
+| 03 | Naive lazy Singleton vs. the four thread-safe variants, under 10 simultaneous threads |
 
 ## Build & run
 
@@ -280,6 +441,11 @@ javac Main.java && java Main
 
 ```sh
 cd examples/02-good-example
+javac Main.java && java Main
+```
+
+```sh
+cd examples/03-thread-safe-variants
 javac Main.java && java Main
 ```
 

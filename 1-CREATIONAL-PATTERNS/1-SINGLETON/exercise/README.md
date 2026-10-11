@@ -68,7 +68,7 @@ application:
 1. Turn `InvoiceNumberGenerator` into a Singleton with the three ingredients from the lesson
 2. Make it **lazy**: the generator is created the first time someone asks for it, not before
 3. Make its creation **thread-safe**. Pick one of the lazy variants from the
-   [lesson](../README.md#eager-vs-lazy-and-the-thread-safety-trap)
+   [lesson](../README.md#making-a-singleton-thread-safe)
 4. Make `next()` itself thread-safe, so two threads can never receive the same number
 5. Update `WebCheckout` and `PhoneSalesDesk` to use the shared generator
 6. Add the multi-threaded check below to `main()` to prove it works
@@ -115,8 +115,8 @@ System.out.println("Unique invoice numbers: " + numbers.size() + " (expected 100
 - [ ] Remove `getInstance()` calls from inside `WebCheckout` and `PhoneSalesDesk`: pass the
       generator in through their constructors, and call `getInstance()` only in `main()`.
       What became easier to see, and to test?
-- [ ] Write a second version of the generator as an `enum`. Which of the acceptance criteria
-      above does it no longer meet, and does that matter here?
+- [ ] Write a second version of the generator as an `enum`. Which parts of your first version
+      did you no longer have to write yourself, and who does that work now?
 
 ## 💡 Hint
 
