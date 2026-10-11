@@ -64,8 +64,8 @@ three lead to the final, combined exercise.
 
 ### [1. Creational Patterns →](./1-CREATIONAL-PATTERNS/)
 
-Take `new` out of your business logic. Factory Method, Abstract Factory, Builder, Prototype,
-Singleton, and Multiton, each solving a different "how do I create this?" pain.
+Take `new` out of your business logic. Singleton, Factory Method, Abstract Factory, Builder,
+Prototype, and Multiton, each solving a different "how do I create this?" pain.
 
 ### [2. Structural Patterns →](./2-STRUCTURAL-PATTERNS/)
 
@@ -91,7 +91,7 @@ design-patterns-java-examples-and-exercises/
 ├── images/
 ├── 1-CREATIONAL-PATTERNS/
 │   ├── README.md                   ← what "creational" really means
-│   └── 1-FACTORY-METHOD/           ← one folder per pattern (added progressively)
+│   └── 1-SINGLETON/                ← one folder per pattern (added progressively)
 │       ├── README.md               ← idea, use cases, bad/good example, how to spot it
 │       ├── examples/
 │       │   ├── 01-bad-example/Main.java
@@ -241,12 +241,12 @@ Your work is now saved on GitHub, in your fork, on a branch named after you.
 ### Build & run any example or exercise
 
 ```sh
-cd 1-CREATIONAL-PATTERNS/1-FACTORY-METHOD/examples/02-good-example
+cd 1-CREATIONAL-PATTERNS/1-SINGLETON/examples/02-good-example
 javac Main.java && java Main
 ```
 
 ```sh
-cd 1-CREATIONAL-PATTERNS/1-FACTORY-METHOD/exercise
+cd 1-CREATIONAL-PATTERNS/1-SINGLETON/exercise
 javac Starter.java && java Starter
 ```
 

@@ -108,18 +108,23 @@ to the same question, each for a different kind of creation problem.
 
 | # | Pattern | In one sentence | The pain it removes | Status |
 |---|---|---|---|---|
-| 1 | **Factory Method** | Let subclasses decide which concrete class to create | `if`/`switch` on type scattered around the code | 🚧 coming soon |
-| 2 | **Abstract Factory** | Create *families* of related objects without naming their classes | Mixing incompatible objects (Windows button + macOS menu) | 🚧 coming soon |
-| 3 | **Builder** | Construct a complex object step by step | Telescoping constructors and unreadable call sites | 🚧 coming soon |
-| 4 | **Prototype** | Create new objects by cloning an existing one | Expensive or complicated setup repeated for every copy | 🚧 coming soon |
-| 5 | **Singleton** | Guarantee exactly one instance with a global access point | Multiple conflicting instances of a shared resource | 🚧 coming soon |
+| 1 | [**Singleton**](./1-SINGLETON/) | Guarantee exactly one instance with a global access point | Multiple conflicting instances of a shared resource | ✅ available |
+| 2 | **Factory Method** | Let subclasses decide which concrete class to create | `if`/`switch` on type scattered around the code | 🚧 coming soon |
+| 3 | **Abstract Factory** | Create *families* of related objects without naming their classes | Mixing incompatible objects (Windows button + macOS menu) | 🚧 coming soon |
+| 4 | **Builder** | Construct a complex object step by step | Telescoping constructors and unreadable call sites | 🚧 coming soon |
+| 5 | **Prototype** | Create new objects by cloning an existing one | Expensive or complicated setup repeated for every copy | 🚧 coming soon |
 | 6 | **Multiton** | Guarantee exactly one instance *per key* | One registry of named instances managed by hand | 🚧 coming soon |
 
-> **Why Singleton isn't first:** it's the easiest pattern to write and the most misused one.
-> A Singleton is global state in disguise: it hides dependencies and makes testing hard. You'll
-> learn it *after* the factories, when you can judge when it really is the right tool.
+> **Why Singleton is first:** it's the smallest pattern, one class with three ingredients, so
+> it's the easiest place to learn how a pattern lesson works. It's also the most misused
+> pattern: a Singleton is global state in disguise, which hides dependencies and makes testing
+> hard. The lesson covers when it's the right tool and when it isn't.
 > Multiton is not one of the original "Gang of Four" patterns. It extends the Singleton idea to
 > one instance per key.
+
+## Start learning
+
+### [1. Singleton →](./1-SINGLETON/)
 
 ## Common misconceptions
 
