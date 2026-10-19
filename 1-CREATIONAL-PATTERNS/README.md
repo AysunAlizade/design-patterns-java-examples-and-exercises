@@ -121,7 +121,7 @@ to the same question, each for a different kind of creation problem.
 |---|---|---|---|---|
 | 1 | [**Singleton**](./1-SINGLETON/) | Guarantee exactly one instance with a global access point | Multiple conflicting instances of a shared resource | ✅ available |
 | 2 | [**Factory Method**](./2-FACTORY-METHOD/) | Let subclasses decide which concrete class to create | `if`/`switch` on type scattered around the code | ✅ available |
-| 3 | **Abstract Factory** | Create *families* of related objects without naming their classes | Mixing incompatible objects (Windows button + macOS menu) | 🚧 coming soon |
+| 3 | [**Abstract Factory**](./3-ABSTRACT-FACTORY/) | Create *families* of related objects without naming their classes | Mixing incompatible objects (Windows button + macOS menu) | ✅ available |
 | 4 | **Builder** | Construct a complex object step by step | Telescoping constructors and unreadable call sites | 🚧 coming soon |
 | 5 | **Prototype** | Create new objects by cloning an existing one | Expensive or complicated setup repeated for every copy | 🚧 coming soon |
 | 6 | **Multiton** | Guarantee exactly one instance *per key* | One registry of named instances managed by hand | 🚧 coming soon |
@@ -138,6 +138,8 @@ to the same question, each for a different kind of creation problem.
 ### [1. Singleton →](./1-SINGLETON/)
 
 ### [2. Factory Method →](./2-FACTORY-METHOD/)
+
+### [3. Abstract Factory →](./3-ABSTRACT-FACTORY/)
 
 ## Common misconceptions
 
