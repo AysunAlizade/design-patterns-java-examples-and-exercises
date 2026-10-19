@@ -347,6 +347,4 @@ Method.
 
 ## Next
 
-### 3. Abstract Factory *(coming soon)*
-
-Back to [Creational Patterns](../README.md).
+### [3. Abstract Factory →](../3-ABSTRACT-FACTORY/)
