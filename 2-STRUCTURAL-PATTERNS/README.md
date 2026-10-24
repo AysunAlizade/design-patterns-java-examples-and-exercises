@@ -145,7 +145,7 @@ guarding (Proxy), and so on.
 | 1 | **Adapter** | Convert one interface into another that clients expect | Incompatible APIs (third-party, legacy) leaking into your code | 🚧 coming soon |
 | 2 | **Facade** | Provide one simple entry point to a complex subsystem | Clients orchestrating many low-level classes themselves | 🚧 coming soon |
 | 3 | **Decorator** | Add behavior to an object dynamically by wrapping it | Subclass explosion for every feature combination | 🚧 coming soon |
-| 4 | **Proxy** | Stand in for another object to control access to it | Lazy loading, caching, security checks mixed into real logic | 🚧 coming soon |
+| 4 | [**Proxy**](./4-PROXY/) | Stand in for another object to control access to it | Lazy loading, caching, security checks mixed into real logic | ✅ available |
 | 5 | **Composite** | Treat individual objects and groups of them uniformly | Type checks to handle trees (files/folders, menus, UI) | 🚧 coming soon |
 | 6 | **Bridge** | Split an abstraction from its implementation so both can vary | Class hierarchies multiplying along two dimensions | 🚧 coming soon |
 | 7 | **Flyweight** | Share common state between many fine-grained objects | Memory blow-up from thousands of near-duplicate objects | 🚧 coming soon |
@@ -179,6 +179,10 @@ guarding (Proxy), and so on.
 - JDBC (`DriverManager` API separated from vendor drivers): Bridge
 - `Integer.valueOf(...)` cache, the `String` pool: Flyweight
 - `SLF4J`, a simple logging API over many logging backends: Facade
+
+## Start learning
+
+### [4. Proxy →](./4-PROXY/)
 
 ## Next
 

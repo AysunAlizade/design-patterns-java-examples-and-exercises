@@ -417,6 +417,4 @@ consistent family.
 
 ## Next
 
-### 4. Builder *(coming soon)*
-
-Back to [Creational Patterns](../README.md).
+### [4. Builder →](../4-BUILDER/)

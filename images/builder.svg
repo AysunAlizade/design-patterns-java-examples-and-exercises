@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 470" width="800" height="470" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="solid" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#333333"/>
+    </marker>
+  </defs>
+
+  <rect width="800" height="470" fill="#ffffff"/>
+
+  <!-- Row 1: everyday Java builder -->
+  <text x="20" y="28" font-size="14" font-weight="700" fill="#333333">1. Everyday Java Builder: one complex object, built step by step</text>
+
+  <rect x="20" y="62" width="120" height="56" rx="6" fill="#fde8c8" stroke="#333333" stroke-width="1.5"/>
+  <text x="80" y="95" text-anchor="middle" font-size="15" font-weight="700" fill="#222222">Client</text>
+  <line x1="140" y1="90" x2="176" y2="90" stroke="#333333" stroke-width="1.5" marker-end="url(#solid)"/>
+
+  <rect x="180" y="44" width="200" height="132" rx="6" fill="#e3edfb" stroke="#333333" stroke-width="1.5"/>
+  <text x="280" y="66" text-anchor="middle" font-size="15" font-weight="700" fill="#222222">Email.Builder</text>
+  <line x1="180" y1="76" x2="380" y2="76" stroke="#333333" stroke-width="1"/>
+  <text x="196" y="96" font-size="13" fill="#333333">.to("staff@acme.com")</text>
+  <text x="196" y="116" font-size="13" fill="#333333">.bcc("auditor@...")</text>
+  <text x="196" y="136" font-size="13" fill="#333333">.subject("Q3 results")</text>
+  <text x="196" y="156" font-size="13" fill="#333333">.highPriority()</text>
+  <line x1="380" y1="110" x2="426" y2="110" stroke="#333333" stroke-width="1.5" marker-end="url(#solid)"/>
+
+  <rect x="430" y="80" width="150" height="60" rx="6" fill="#fff6d6" stroke="#333333" stroke-width="1.5"/>
+  <text x="505" y="105" text-anchor="middle" font-size="15" font-weight="700" fill="#222222">build()</text>
+  <text x="505" y="126" text-anchor="middle" font-size="12" fill="#444444">checks every rule</text>
+  <line x1="580" y1="110" x2="626" y2="110" stroke="#333333" stroke-width="1.5" marker-end="url(#solid)"/>
+
+  <rect x="630" y="80" width="150" height="60" rx="6" fill="#d9ecd0" stroke="#333333" stroke-width="1.5"/>
+  <text x="705" y="105" text-anchor="middle" font-size="15" font-weight="700" fill="#222222">Email</text>
+  <text x="705" y="126" text-anchor="middle" font-size="12" fill="#444444">valid and immutable</text>
+
+  <line x1="20" y1="206" x2="780" y2="206" stroke="#cccccc" stroke-width="1" stroke-dasharray="5,4"/>
+
+  <!-- Row 2: GoF builder with director -->
+  <text x="20" y="236" font-size="14" font-weight="700" fill="#333333">2. Classic Builder with a Director: same steps, different representations</text>
+
+  <rect x="20" y="300" width="160" height="66" rx="6" fill="#fde8c8" stroke="#333333" stroke-width="1.5"/>
+  <text x="100" y="327" text-anchor="middle" font-size="15" font-weight="700" fill="#222222">Director</text>
+  <text x="100" y="349" text-anchor="middle" font-size="12" fill="#444444">knows the recipe</text>
+  <line x1="180" y1="333" x2="236" y2="333" stroke="#333333" stroke-width="1.5" marker-end="url(#solid)"/>
+  <text x="208" y="324" text-anchor="middle" font-size="12" fill="#444444">calls</text>
+
+  <rect x="240" y="260" width="230" height="146" rx="6" fill="#e3edfb" stroke="#333333" stroke-width="1.5"/>
+  <text x="355" y="280" text-anchor="middle" font-size="12" font-style="italic" fill="#444444">«interface»</text>
+  <text x="355" y="299" text-anchor="middle" font-size="15" font-weight="700" fill="#222222">EmailBodyBuilder</text>
+  <line x1="240" y1="309" x2="470" y2="309" stroke="#333333" stroke-width="1"/>
+  <text x="256" y="330" font-size="13" fill="#333333">+addHeading(text)</text>
+  <text x="256" y="350" font-size="13" fill="#333333">+addParagraph(text)</text>
+  <text x="256" y="370" font-size="13" fill="#333333">+addButton(label, url)</text>
+  <text x="256" y="390" font-size="13" fill="#333333">+addFooter(text)</text>
+
+  <!-- implementations -->
+  <polygon points="471,333 484,326 484,340" fill="#ffffff" stroke="#333333" stroke-width="1.5"/>
+  <path d="M484,333 L510,333 L510,295 L530,295" fill="none" stroke="#333333" stroke-width="1.5" stroke-dasharray="6,4"/>
+  <path d="M510,333 L510,371 L530,371" fill="none" stroke="#333333" stroke-width="1.5" stroke-dasharray="6,4"/>
+  <text x="497" y="420" text-anchor="middle" font-size="12" fill="#444444">implement</text>
+
+  <rect x="530" y="272" width="172" height="46" rx="6" fill="#e3edfb" stroke="#333333" stroke-width="1.5"/>
+  <text x="616" y="300" text-anchor="middle" font-size="14" font-weight="700" fill="#222222">HtmlBodyBuilder</text>
+  <rect x="530" y="348" width="172" height="46" rx="6" fill="#e3edfb" stroke="#333333" stroke-width="1.5"/>
+  <text x="616" y="376" text-anchor="middle" font-size="14" font-weight="700" fill="#222222">PlainTextBodyBuilder</text>
+
+  <line x1="702" y1="295" x2="720" y2="295" stroke="#333333" stroke-width="1.5" marker-end="url(#solid)"/>
+  <rect x="724" y="276" width="58" height="38" rx="5" fill="#d9ecd0" stroke="#333333" stroke-width="1.2"/>
+  <text x="753" y="300" text-anchor="middle" font-size="13" fill="#222222">HTML</text>
+  <line x1="702" y1="371" x2="720" y2="371" stroke="#333333" stroke-width="1.5" marker-end="url(#solid)"/>
+  <rect x="724" y="352" width="58" height="38" rx="5" fill="#d9ecd0" stroke="#333333" stroke-width="1.2"/>
+  <text x="753" y="376" text-anchor="middle" font-size="13" fill="#222222">Text</text>
+
+  <text x="400" y="452" text-anchor="middle" font-size="12" fill="#444444">One recipe in the Director, one format per builder: a new format is a new builder, a new email is a new Director</text>
+</svg>
