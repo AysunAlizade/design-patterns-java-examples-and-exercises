@@ -1,68 +1,88 @@
 import java.util.HashMap;
 import java.util.Map;
 
-// Proxy Practice Exercise — starter code. ExchangeRateService connects to a slow,
-// paid API, checks the user's plan, and caches rates, all in one class. Split it
-// into one real API client and separate proxies for each concern.
-// See README.md in this folder for the full task and requirements.
+interface ExchangeRates {
+    double getRate(String from, String to);
+}
 
-class ExchangeRateService {
-    private static final Map<String, Double> API_RATES = Map.of(
-            "USD->EUR", 0.92, "EUR->USD", 1.09,
-            "USD->GBP", 0.79, "GBP->USD", 1.27,
-            "USD->JPY", 151.40, "EUR->JPY", 164.20);
+class RatesApiClient implements ExchangeRates {
+    public double getRate(String from, String to) {
+        System.out.println("Connecting to API...");
 
-    private final Map<String, Double> cache = new HashMap<>();
-    private int apiCalls = 0;
+        if (from.equals("USD") && to.equals("EUR")) {
+            System.out.println("API call: $0.01");
+            return 0.92;
+        }
 
-    public ExchangeRateService() {
-        // expensive: runs at application startup, even if nobody ever converts anything
-        System.out.println("Connecting and authenticating with RatesAPI (slow)...");
+        if (from.equals("USD") && to.equals("JPY")) {
+            System.out.println("API call: $0.01");
+            return 151.40;
+        }
+
+        throw new IllegalArgumentException("Unknown currency");
+    }
+}
+
+class LazyProxy implements ExchangeRates {
+    private ExchangeRates api;
+
+    public double getRate(String from, String to) {
+        if (api == null) {
+            api = new RatesApiClient();
+        }
+        return api.getRate(from, to);
+    }
+}
+
+class CacheProxy implements ExchangeRates {
+    private ExchangeRates api;
+    private Map<String, Double> cache = new HashMap<>();
+
+    public CacheProxy(ExchangeRates api) {
+        this.api = api;
     }
 
-    public double getRate(String plan, String from, String to) {
-        // concern 1: plan restriction. FREE users may only convert between USD, EUR, GBP
-        if (plan.equals("FREE") && !(isMajor(from) && isMajor(to))) {
-            throw new IllegalStateException("Upgrade to PRO to convert " + from + " -> " + to);
+    public double getRate(String from, String to) {
+        String key = from + to;
+
+        if (!cache.containsKey(key)) {
+            cache.put(key, api.getRate(from, to));
         }
 
-        // concern 2: caching
-        String pair = from + "->" + to;
-        if (cache.containsKey(pair)) {
-            return cache.get(pair);
-        }
+        return cache.get(key);
+    }
+}
 
-        // concern 3: the real work, a slow API call that costs money
-        apiCalls++;
-        Double rate = API_RATES.get(pair);
-        if (rate == null) {
-            throw new IllegalArgumentException("Unknown currency pair: " + pair);
-        }
-        System.out.println("RatesAPI call #" + apiCalls + ": " + pair + " = " + rate + " ($0.01 charged)");
-        cache.put(pair, rate);
-        return rate;
+class PlanProxy implements ExchangeRates {
+    private ExchangeRates api;
+    private String plan;
+
+    public PlanProxy(ExchangeRates api, String plan) {
+        this.api = api;
+        this.plan = plan;
     }
 
-    private boolean isMajor(String currency) {
-        return currency.equals("USD") || currency.equals("EUR") || currency.equals("GBP");
+    public double getRate(String from, String to) {
+        if (plan.equals("FREE") && (to.equals("JPY") || from.equals("JPY"))) {
+            throw new IllegalStateException("Upgrade to PRO");
+        }
+
+        return api.getRate(from, to);
     }
 }
 
 class CurrencyConverter {
-    private final ExchangeRateService rates;
-    private final String plan;
+    private ExchangeRates rates;
 
-    public CurrencyConverter(ExchangeRateService rates, String plan) {
+    public CurrencyConverter(ExchangeRates rates) {
         this.rates = rates;
-        this.plan = plan;
     }
 
     public void convert(double amount, String from, String to) {
         try {
-            double result = amount * rates.getRate(plan, from, to);
-            System.out.printf("%.2f %s = %.2f %s%n", amount, from, result, to);
+            System.out.println(amount * rates.getRate(from, to) + " " + to);
         } catch (IllegalStateException e) {
-            System.out.println("Refused: " + e.getMessage());
+            System.out.println(e.getMessage());
         }
     }
 }
@@ -70,13 +90,16 @@ class CurrencyConverter {
 public class Starter {
     public static void main(String[] args) {
         System.out.println("App started");
-        ExchangeRateService rates = new ExchangeRateService();
 
-        CurrencyConverter pro = new CurrencyConverter(rates, "PRO");
-        CurrencyConverter free = new CurrencyConverter(rates, "FREE");
+        ExchangeRates cache = new CacheProxy(new LazyProxy());
+
+        CurrencyConverter pro = new CurrencyConverter(new PlanProxy(cache, "PRO"));
+
+        CurrencyConverter free = new CurrencyConverter(new PlanProxy(cache, "FREE"));
 
         pro.convert(100, "USD", "EUR");
         free.convert(50, "USD", "EUR");
+
         pro.convert(100, "USD", "JPY");
         free.convert(100, "USD", "JPY");
     }
