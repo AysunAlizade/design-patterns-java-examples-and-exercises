@@ -1,77 +1,141 @@
-// Builder Practice Exercise — starter code. DatabaseConfig has ten settings and a
-// stack of telescoping constructors. Two booleans were swapped in production, and an
-// invalid configuration was accepted without complaint. Replace the constructors
-// with a validating Builder, then add presets with a Director.
-// See README.md in this folder for the full task and requirements.
-
 class DatabaseConfig {
-    private String host;
-    private int port;
-    private String database;
-    private String username;
-    private String password;
-    private boolean readOnly;
-    private boolean ssl;
-    private String sslCertificatePath;
-    private int poolSize;
-    private int timeoutSeconds;
+    private final String host;
+    private final int port;
+    private final String database;
+    private final String username;
+    private final String password;
+    private final boolean readOnly;
+    private final boolean ssl;
+    private final String certificate;
+    private final int poolSize;
+    private final int timeout;
 
-    public DatabaseConfig(String host, String database) {
-        this(host, 5432, database, null, null, false, false, null, 10, 30);
+    private DatabaseConfig(Builder b) {
+        host = b.host;
+        port = b.port;
+        database = b.database;
+        username = b.username;
+        password = b.password;
+        readOnly = b.readOnly;
+        ssl = b.ssl;
+        certificate = b.certificate;
+        poolSize = b.poolSize;
+        timeout = b.timeout;
     }
 
-    public DatabaseConfig(String host, int port, String database, String username, String password) {
-        this(host, port, database, username, password, false, false, null, 10, 30);
-    }
-
-    public DatabaseConfig(String host, int port, String database, String username, String password,
-                          boolean readOnly, boolean ssl) {
-        this(host, port, database, username, password, readOnly, ssl, null, 10, 30);
-    }
-
-    public DatabaseConfig(String host, int port, String database, String username, String password,
-                          boolean readOnly, boolean ssl, String sslCertificatePath,
-                          int poolSize, int timeoutSeconds) {
-        this.host = host;
-        this.port = port;
-        this.database = database;
-        this.username = username;
-        this.password = password;
-        this.readOnly = readOnly;
-        this.ssl = ssl;
-        this.sslCertificatePath = sslCertificatePath;
-        this.poolSize = poolSize;
-        this.timeoutSeconds = timeoutSeconds;
-    }
-
-    public void setPoolSize(int poolSize) {
-        this.poolSize = poolSize;
+    public static Builder builder(String host, String database) {
+        return new Builder(host, database);
     }
 
     public void connect() {
-        System.out.println("Connecting to jdbc:postgresql://" + host + ":" + port + "/" + database
-                + " as " + username);
-        System.out.println("  ssl=" + ssl + " (cert: " + sslCertificatePath + "), readOnly=" + readOnly
-                + ", pool=" + poolSize + ", timeout=" + timeoutSeconds + "s");
+        System.out.println("Database: " + host + ":" + port + "/" + database);
+        System.out.println("ssl=" + ssl + ", readOnly=" + readOnly + ", pool=" + poolSize + ", timeout=" + timeout);
+    }
+
+    static class Builder {
+        private final String host;
+        private final String database;
+
+        private int port = 5432;
+        private String username;
+        private String password;
+        private boolean readOnly = false;
+        private boolean ssl = false;
+        private String certificate;
+        private int poolSize = 10;
+        private int timeout = 30;
+
+        Builder(String host, String database) {
+            this.host = host;
+            this.database = database;
+        }
+
+        public Builder port(int port) {
+            this.port = port;
+            return this;
+        }
+
+        public Builder credentials(String username, String password) {
+            this.username = username;
+            this.password = password;
+            return this;
+        }
+
+        public Builder readOnly() {
+            this.readOnly = true;
+            return this;
+        }
+
+        public Builder ssl(String certificate) {
+            this.ssl = true;
+            this.certificate = certificate;
+            return this;
+        }
+
+        public Builder poolSize(int size) {
+            this.poolSize = size;
+            return this;
+        }
+
+        public Builder timeout(int seconds) {
+            this.timeout = seconds;
+            return this;
+        }
+
+        public DatabaseConfig build() {
+            if (host == null || host.isBlank())
+                throw new IllegalStateException("Host is empty");
+
+            if (database == null || database.isBlank())
+                throw new IllegalStateException("Database is empty");
+
+            if (port < 1 || port > 65535)
+                throw new IllegalStateException("Invalid port: " + port);
+
+            if (password != null && (username == null || username.isBlank()))
+                throw new IllegalStateException("Username is required");
+
+            if (ssl && (certificate == null || certificate.isBlank()))
+                throw new IllegalStateException("SSL certificate is missing");
+
+            if (poolSize < 1 || poolSize > 100)
+                throw new IllegalStateException("Invalid pool size: " + poolSize);
+
+            if (timeout <= 0)
+                throw new IllegalStateException("Invalid timeout: " + timeout);
+
+            return new DatabaseConfig(this);
+        }
+    }
+}
+
+class DatabaseConfigDirector {
+    public static DatabaseConfig.Builder production(String host, String database) {
+        return DatabaseConfig.builder(host, database).ssl("/etc/ssl/certs/db.pem").poolSize(50).timeout(10);
+    }
+
+    public static DatabaseConfig.Builder localDevelopment(String database) {
+        return DatabaseConfig.builder("localhost", database).poolSize(2);
     }
 }
 
 public class Starter {
     public static void main(String[] args) {
-        // Production: the intent was "SSL on, read-only off". Look at the output.
-        DatabaseConfig production = new DatabaseConfig(
-                "db.prod.acme.com", 5432, "orders", "app", "s3cret", true, false);
+        DatabaseConfig production = DatabaseConfigDirector.production("db.prod.acme.com", "orders") .credentials("app", "s3cret") .build();
+
         production.connect();
 
-        // Reporting replica: a port typo, SSL without a certificate, and a pool of 0.
-        // All of it is accepted.
-        DatabaseConfig reporting = new DatabaseConfig(
-                "db.replica.acme.com", 99999, "orders", "reports", null, true, true, null, 0, 30);
-        reporting.connect();
+        try {
+            DatabaseConfig reporting = DatabaseConfig.builder("db.replica.acme.com", "orders").port(99999) .ssl(null).poolSize(0).build();
 
-        // Local development: fine, but someone later "tunes" the shared object.
-        DatabaseConfig local = new DatabaseConfig("localhost", "orders_dev");
-        local.setPoolSize(-5);
+            reporting.connect();
+          }  
+         catch (IllegalStateException e) {
+            System.out.println("Error: " + e.getMessage());
+        }
+
+        DatabaseConfig local = DatabaseConfigDirector.localDevelopment("orders_dev").build();
+
         local.connect();
     }
 }
